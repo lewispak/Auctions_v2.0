@@ -14,10 +14,12 @@ namespace Auctions_v2._0.Controllers
     public class ListingsController : Controller
     {
         private readonly IListingsService _listingsService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ListingsController(IListingsService listingService)
+        public ListingsController(IListingsService listingService, IWebHostEnvironment webHostEnvironment)
         {
             _listingsService = listingService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // GET: Listings
@@ -55,19 +57,34 @@ namespace Auctions_v2._0.Controllers
         // POST: Listings/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImagePath,IsSold,IdentityUserId")] Listing listing)
-        //{
-        //    if (ModelState.IsValid)
-        //    {
-        //        _context.Add(listing);
-        //        await _context.SaveChangesAsync();
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    ViewData["IdentityUserId"] = new SelectList(_context.Users, "Id", "Id", listing.IdentityUserId);
-        //    return View(listing);
-        //}
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(ListingVM listing)
+        {
+            if (listing.Image != null) 
+            {
+                string uploadDir = Path.Combine(_webHostEnvironment.WebRootPath, "Images");
+                string fileName = listing.Image.FileName;
+                string filePath = Path.Combine(uploadDir, fileName);
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    listing.Image.CopyTo(fileStream);
+                }
+
+                var listObj = new Listing
+                {
+                    Title = listing.Title,
+                    Description = listing.Description,
+                    Price = listing.Price,
+                    IdentityUserId = listing.IdentityUserId,
+                    ImagePath = fileName,
+                };
+
+                await _listingsService.Add(listObj);
+                return RedirectToAction("Index");
+            }
+            return View(listing);
+        }
 
         //    // GET: Listings/Edit/5
         //    public async Task<IActionResult> Edit(int? id)

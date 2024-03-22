@@ -12,6 +12,13 @@ namespace Auctions_v2._0.Data.Services
         {
             _context = context;
         }
+
+        public async Task Add(Listing listing)
+        {
+            _context.Listings.Add(listing);
+            await _context.SaveChangesAsync();
+        }
+
         public IQueryable<Listing> GetAll()
         {
             var applicationDbContext = _context.Listings.Include(l => l.User);
