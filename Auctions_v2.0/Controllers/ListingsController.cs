@@ -16,13 +16,15 @@ namespace Auctions_v2._0.Controllers
     {
         private readonly IListingsService _listingsService;
         private readonly IBidsService _bidsService;
+        private readonly ICommentsService _commentsService;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ListingsController(IListingsService listingService, IWebHostEnvironment webHostEnvironment, IBidsService bidsService)
+        public ListingsController(IListingsService listingService, IWebHostEnvironment webHostEnvironment, IBidsService bidsService, ICommentsService commentsService)
         {
             _listingsService = listingService;
             _webHostEnvironment = webHostEnvironment;
             _bidsService = bidsService;
+            _commentsService = commentsService;
         }
 
         // GET: Listings
@@ -115,6 +117,17 @@ namespace Auctions_v2._0.Controllers
             listing.IsSold = true;
             await _listingsService.SaveChanges();
 
+            return View("Details", listing);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> AddComment([Bind("id, Content, ListingId, IdentityUserId")] Comment comment)
+        {
+            if(ModelState.IsValid)
+            {
+                await _commentsService.Add(comment);
+            }
+            var listing = await _listingsService.GetById(comment.ListingId);
             return View("Details", listing);
         }
 
