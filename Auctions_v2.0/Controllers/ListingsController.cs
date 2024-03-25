@@ -9,6 +9,7 @@ using Auctions_v2._0.Data;
 using Auctions_v2._0.Models;
 using Auctions_v2._0.Data.Services;
 using Microsoft.Identity.Client;
+using System.Security.Claims;
 
 namespace Auctions_v2._0.Controllers
 {
@@ -36,11 +37,19 @@ namespace Auctions_v2._0.Controllers
             if (!string.IsNullOrEmpty(searchString))
             {
                 applicationDbContext = applicationDbContext.Where(a => a.Title.Contains(searchString));
-                return View(await PaginatedList<Listing>.CreateAsync(applicationDbContext./*Where(l => l.IsSold == false).*/AsNoTracking(), pageNumber ?? 1, pageSize));
+                return View(await PaginatedList<Listing>.CreateAsync(applicationDbContext.Where(l => l.IsSold == false).AsNoTracking(), pageNumber ?? 1, pageSize));
 
             }
 
-            return View(await PaginatedList<Listing>.CreateAsync(applicationDbContext./*Where(l => l.IsSold == false).*/AsNoTracking(), pageNumber ?? 1, pageSize));
+            return View(await PaginatedList<Listing>.CreateAsync(applicationDbContext.Where(l => l.IsSold == false).AsNoTracking(), pageNumber ?? 1, pageSize));
+        }
+
+        public async Task<IActionResult> MyListings(int? pageNumber)
+        {
+            var applicationDbContext = _listingsService.GetAll();
+            int pageSize = 3;
+
+            return View("Index", await PaginatedList<Listing>.CreateAsync(applicationDbContext.Where(l => l.IdentityUserId == User.FindFirstValue(ClaimTypes.NameIdentifier)).AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Listings/Details/5
